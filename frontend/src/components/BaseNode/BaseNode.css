@@ -1,0 +1,323 @@
+/**
+ * BaseNode.css - Node Design System
+ * 
+ * Architectural Decision (AD-2): CSS Custom Properties Design System
+ * ===================================================================
+ * 
+ * WHY THIS APPROACH:
+ * 1. Theming: Easy to switch between light/dark themes
+ * 2. Consistency: All components reference the same values
+ * 3. Performance: CSS variables are computed by the browser, not JS
+ * 4. Maintainability: Single source for design tokens
+ * 
+ * Design Philosophy:
+ * - Dark, professional theme inspired by VectorShift
+ * - Glassmorphism for depth and modern feel
+ * - Subtle animations for polish
+ * - Clear visual hierarchy with accent colors
+ */
+
+/* ===============================================
+   BASE NODE CONTAINER
+   =============================================== */
+
+.base-node {
+  background: linear-gradient(
+    145deg,
+    rgba(30, 36, 50, 0.95) 0%,
+    rgba(20, 24, 35, 0.98) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  overflow: visible;
+  position: relative;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  min-width: 200px;
+  max-width: 320px;
+}
+
+.base-node:hover {
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 0 20px var(--accent-color, rgba(99, 102, 241, 0.2));
+}
+
+.base-node.selected {
+  border-color: var(--accent-color, var(--primary-accent));
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    0 0 30px var(--accent-color, rgba(99, 102, 241, 0.3));
+}
+
+/* ===============================================
+   NODE HEADER
+   =============================================== */
+
+.node-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(
+    90deg,
+    var(--accent-color, var(--primary-accent)) 0%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-position: 100% 0;
+  border-radius: 11px 11px 0 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.node-header::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--accent-color, var(--primary-accent));
+  border-radius: 4px 0 0 0;
+}
+
+.node-icon {
+  font-size: 14px;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.node-title {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===============================================
+   NODE HANDLES
+   =============================================== */
+
+.node-handle {
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  background: var(--accent-color, var(--primary-accent)) !important;
+  transition: all 0.2s ease !important;
+  z-index: 10;
+}
+
+.node-handle:hover {
+  transform: scale(1.3);
+  border-color: #fff !important;
+  box-shadow: 0 0 12px var(--accent-color, var(--primary-accent));
+}
+
+.node-handle-target {
+  left: -5px !important;
+}
+
+.node-handle-source {
+  right: -5px !important;
+}
+
+.node-handle-dynamic {
+  background: #10B981 !important;
+  border-color: rgba(16, 185, 129, 0.5) !important;
+}
+
+/* ===============================================
+   HANDLE LABELS - Positioned as small tags near handles
+   =============================================== */
+
+.handle-label-container {
+  position: absolute;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateY(-50%);
+  z-index: 15;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2px 4px;
+  border-radius: 3px;
+  letter-spacing: 0.3px;
+}
+
+/* Left handle labels - positioned just right of the handle dot */
+.handle-label-container.handle-label-left {
+  left: 8px;
+}
+
+/* Right handle labels - positioned just left of the handle dot */
+.handle-label-container.handle-label-right {
+  right: 8px;
+  text-align: right;
+}
+
+/* ===============================================
+   NODE CONTENT - Padding controlled by JS based on handles
+   =============================================== */
+
+.node-content {
+  padding-top: 12px;
+  padding-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+
+/* Dynamic handle labels (for variables) */
+.handle-label-container.dynamic-label {
+  color: #10B981;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* ===============================================
+   FIELD COMPONENTS
+   =============================================== */
+
+.node-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  min-width: 0; /* Allow flex item to shrink below content size */
+}
+
+.field-label {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.field-input,
+.field-textarea,
+.field-select {
+  width: 100%;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: #fff;
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  min-width: 0; /* Allow input to shrink */
+}
+
+.field-input:focus,
+.field-textarea:focus,
+.field-select:focus {
+  outline: none;
+  border-color: var(--accent-color, var(--primary-accent));
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.field-input::placeholder,
+.field-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 11px;
+}
+
+.field-textarea {
+  resize: none;
+  line-height: 1.5;
+  min-height: 50px;
+}
+
+.field-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='rgba(255,255,255,0.5)' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.field-select option {
+  background: #1a1f2e;
+  color: #fff;
+  padding: 8px;
+}
+
+/* Display Field */
+.field-display {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+}
+
+.display-icon {
+  font-size: 12px;
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.display-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===============================================
+   RESPONSIVE & ANIMATIONS
+   =============================================== */
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.node-handle.connecting {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Scrollbar Styling for Textareas */
+.field-textarea::-webkit-scrollbar {
+  width: 4px;
+}
+
+.field-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.field-textarea::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.field-textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
