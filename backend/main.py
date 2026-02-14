@@ -118,13 +118,17 @@ def is_directed_acyclic_graph(nodes: List[NodeData], edges: List[EdgeData]) -> b
     for edge in edges:
         source = edge.source
         target = edge.target
-        
+
+        # Defensive validation:
+        # Ignore edges that reference unknown nodes (can happen with stale state/client bugs)
+        if source not in in_degree or target not in in_degree:
+            continue
+
         # Add edge to adjacency list
         adjacency_list[source].append(target)
-        
+
         # Increment in-degree of target
-        if target in in_degree:
-            in_degree[target] += 1
+        in_degree[target] += 1
     
     # Initialize queue with nodes that have no incoming edges (in-degree = 0)
     queue = deque([node_id for node_id, degree in in_degree.items() if degree == 0])

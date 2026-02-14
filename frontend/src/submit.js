@@ -18,20 +18,21 @@
  * - Returns: { num_nodes: int, num_edges: int, is_dag: bool }
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from './store';
-import { 
-  CheckCircle2, 
-  AlertTriangle, 
-  BarChart3, 
-  GitBranch, 
-  Check, 
-  X, 
-  PartyPopper, 
+import {
+  CheckCircle2,
+  AlertTriangle,
+  BarChart3,
+  GitBranch,
+  Check,
+  X,
+  PartyPopper,
   AlertCircle,
   Send,
   Loader2
 } from 'lucide-react';
+import { useToast } from './components/ui/ToastProvider';
 
 // Backend URL - can be configured via environment variable
 const API_BASE_URL = 'http://localhost:8000';
@@ -99,7 +100,7 @@ const ResultModal = ({ result, onClose }) => {
           }}>
             {is_dag ? <PartyPopper size={16} style={{ marginTop: '2px', flexShrink: 0 }} /> : <AlertCircle size={16} style={{ marginTop: '2px', flexShrink: 0 }} />}
             <span>
-              {is_dag 
+              {is_dag
                 ? 'Your pipeline is a valid Directed Acyclic Graph! It can be executed without circular dependencies.'
                 : 'Your pipeline contains cycles. Please remove circular connections to create a valid pipeline.'
               }
@@ -126,7 +127,11 @@ export const SubmitButton = () => {
   // Use individual selectors to prevent infinite re-renders
   const nodes = useStore((state) => state.nodes);
   const edges = useStore((state) => state.edges);
-  
+  const lastRun = useStore((state) => state.lastRun);
+  const setLastRun = useStore((state) => state.setLastRun);
+
+  const { addToast } = useToast();
+
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [, setError] = useState(null);
@@ -171,16 +176,51 @@ export const SubmitButton = () => {
 
       const data = await response.json();
       setResult(data);
+      setLastRun({ ...data, at: Date.now() });
+
+      // Show success toast
+      if (data.is_dag) {
+        addToast("Pipeline parsed successfully! It is a valid DAG.", "success");
+      } else {
+        addToast("Pipeline parsed successfully, but cycles were detected.", "error");
+      }
     } catch (err) {
       console.error('Pipeline submission error:', err);
       setError(err.message);
-      
-      // Show error in alert
-      alert(`Failed to analyze pipeline: ${err.message}\n\nMake sure the backend server is running at ${API_BASE_URL}`);
+
+      // Show error in toast
+      addToast(`Failed to analyze pipeline: ${err.message}`, "error");
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      const isCmdOrCtrl = event.metaKey || event.ctrlKey;
+      const isEnter = event.key === 'Enter';
+      if (!isCmdOrCtrl || !isEnter) return;
+
+      const tag = String(document.activeElement?.tagName || '').toLowerCase();
+      const isTyping = tag === 'input' || tag === 'textarea' || document.activeElement?.isContentEditable;
+      if (isTyping) return;
+
+      event.preventDefault();
+      handleSubmit();
+    };
+
+    const onSubmitEvent = () => {
+      handleSubmit();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('pipeline:submit', onSubmitEvent);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('pipeline:submit', onSubmitEvent);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges]);
 
   /**
    * Close the result modal
@@ -192,27 +232,54 @@ export const SubmitButton = () => {
   return (
     <>
       <div className="submit-section">
-        <button 
-          className="submit-button"
-          onClick={handleSubmit}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <span className="submit-button-icon">
-                <Loader2 size={16} className="animate-spin" />
+        <div className="submit-section-left" />
+
+        <div className="submit-section-center">
+          <button
+            className="submit-button"
+            onClick={handleSubmit}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span className="submit-button-icon">
+                  <Loader2 size={16} className="animate-spin" />
+                </span>
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <span className="submit-button-icon">
+                  <Send size={16} />
+                </span>
+                Submit Pipeline
+              </>
+            )}
+          </button>
+        </div>
+
+        <div className="submit-section-right">
+          {lastRun ? (
+            <button
+              className={`run-pill ${lastRun.is_dag ? 'success' : 'error'}`}
+              onClick={() => setResult(lastRun)}
+              title="View last run details"
+              type="button"
+            >
+              <span className="run-pill-icon">
+                {lastRun.is_dag ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
               </span>
-              Analyzing...
-            </>
+              <span className="run-pill-text">
+                {lastRun.is_dag ? 'DAG' : 'Cycle'} · {lastRun.num_nodes} nodes · {lastRun.num_edges} edges
+              </span>
+              <span className="run-pill-hint">Details</span>
+            </button>
           ) : (
-            <>
-              <span className="submit-button-icon">
-                <Send size={16} />
-              </span>
-              Submit Pipeline
-            </>
+            <div className="run-pill-placeholder" title="Tip: Press Ctrl/Cmd+Enter to submit">
+              Ctrl/Cmd+Enter to run
+            </div>
           )}
-        </button>
+        </div>
       </div>
 
       {/* Result Modal */}
